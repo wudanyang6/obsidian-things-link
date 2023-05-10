@@ -9,13 +9,9 @@ function getCurrentLine(editor: Editor, view: MarkdownView) {
 
 function prepareTask(line: string) {
 	line = line.trim()
-	//remove all leading non-alphanumeric characters
-	line = line.replace(/^\W+|\W+$/, '')
 	line = urlEncode(line)
 	return line
 }
-
-
 
 function urlEncode(line: string) {
 	line = encodeURIComponent(line)
@@ -24,12 +20,12 @@ function urlEncode(line: string) {
 
 
 function createProject(title: string, deepLink: string) {
-	const project = `things:///add-project?title=${title}&notes=${deepLink}&x-success=obsidian://project-id`
+	const project = `things:///add-project?title=${title}&notes=${deepLink}&tags=obsidian&x-success=obsidian://project-id`
 	window.open(project);
 }
 
 function createTask(line: string, deepLink: string) {
-	const task = `things:///add?title=${line}&notes=${deepLink}&x-success=obsidian://task-id`
+	const task = `things:///add?title=${line}&notes=${deepLink}&tags=obsidian&x-success=obsidian://task-id`
 	window.open(task);
 }
 
@@ -59,7 +55,7 @@ export default class ThingsLink extends Plugin {
 						line: h1Index,
 						ch:lines[h1Index].length
 					}
-					editor.replaceRange(`\n\n[Things](${thingsDeepLink})`, startRange, endRange);
+					editor.replaceRange(`\n\n[🏗️ Things-Project-Link](${thingsDeepLink})`, startRange, endRange);
 				} else {
 						let startRange: EditorPosition = {
 						line: 0,
@@ -69,7 +65,7 @@ export default class ThingsLink extends Plugin {
 						line: 0,
 						ch:0
 					}
-					editor.replaceRange(`[Things](${thingsDeepLink})\n\n`, startRange, endRange);
+					editor.replaceRange(` #things-todo [🏗️ Project-Link](${thingsDeepLink})\n\n`, startRange, endRange);
 				}
 			}
 		});
@@ -99,20 +95,10 @@ export default class ThingsLink extends Plugin {
 				return;
 			} else {
 				const editor = view.editor
-				const currentLine = getCurrentLine(editor, view)
-				const firstLetterIndex = currentLine.search(/[a-zA-Z]|[0-9]/);
-				const line = currentLine.substring(firstLetterIndex, currentLine.length)
-				let editorPosition = view.editor.getCursor()
-				const lineLength = view.editor.getLine(editorPosition.line).length
-				let startRange: EditorPosition = {
-					line: editorPosition.line,
-					ch: firstLetterIndex
-				}
-				let endRange: EditorPosition = {
-					line: editorPosition.line,
-					ch: lineLength
-				}
-				view.editor.replaceRange(`[${line}](things:///show?id=${taskID})`, startRange, endRange);
+				// 获取当前行的文本内容
+				const lineText = editor.getLine(editor.getCursor().line);
+				// 在当前行的末尾添加新的文本
+				editor.replaceRange(` [🏗️ Task-Link](things:///show?id=${taskID}) #things-todo `, {line: editor.getCursor().line, ch: lineText.length});
 			}
 		});
 	
