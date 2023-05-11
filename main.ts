@@ -1,4 +1,4 @@
-import { Editor, EditorPosition, MarkdownView, Plugin, Vault, Workspace, App } from 'obsidian';
+import { Editor, EditorPosition, MarkdownView, Plugin, Vault, Workspace, App, getAllTags } from 'obsidian';
 
 
 function getCurrentLine(editor: Editor, view: MarkdownView) {
@@ -25,8 +25,26 @@ function createProject(title: string, deepLink: string) {
 }
 
 function createTask(line: string, deepLink: string) {
-	const task = `things:///add?title=${line}&notes=${deepLink}&tags=obsidian&x-success=obsidian://task-id`
-	window.open(task);
+	// 获取当前活动文件对象
+	const file = this.app.workspace.getActiveFile();
+
+	// 获取当前文件的元数据
+	const fileCache = this.app.metadataCache.getFileCache(file)
+	const title = file.name
+	const fileName = title.replace(/\.md$/, '')
+	const tags = getAllTags(fileCache)
+	console.log(tags)
+
+	let taskUrl = `things:///add?title=${line}&notes=${deepLink}&tags=obsidian&x-success=obsidian://task-id`
+
+	// 判断当前文件的标签中是否包含 #things-project 标签
+	if (tags.includes('#things-project')) {
+		// task url 中添加 project 参数
+		taskUrl += '&list=' + encodeURIComponent(fileName)
+	}
+	console.log(taskUrl)
+
+	window.open(taskUrl);
 }
 
 
@@ -49,27 +67,27 @@ export default class ThingsLink extends Plugin {
 				if (h1Index !== -1) {
 					let startRange: EditorPosition = {
 						line: h1Index,
-						ch:lines[h1Index].length
+						ch: lines[h1Index].length
 					}
 					let endRange: EditorPosition = {
 						line: h1Index,
-						ch:lines[h1Index].length
+						ch: lines[h1Index].length
 					}
-					editor.replaceRange(`\n\n[🏗️ Things-Project-Link](${thingsDeepLink})`, startRange, endRange);
+					editor.replaceRange(`\n\n #things-project [🏗️ Things-Project](${thingsDeepLink})`, startRange, endRange);
 				} else {
-						let startRange: EditorPosition = {
+					let startRange: EditorPosition = {
 						line: 0,
-						ch:0
+						ch: 0
 					}
 					let endRange: EditorPosition = {
 						line: 0,
-						ch:0
+						ch: 0
 					}
-					editor.replaceRange(` #things-todo [🏗️ Project-Link](${thingsDeepLink})\n\n`, startRange, endRange);
+					editor.replaceRange(` #things-project [🏗️ Things-Project](${thingsDeepLink})\n\n`, startRange, endRange);
 				}
 			}
 		});
-		
+
 		this.addCommand({
 			id: 'create-things-project',
 			name: 'Create Things Project',
@@ -97,12 +115,13 @@ export default class ThingsLink extends Plugin {
 				const editor = view.editor
 				// 获取当前行的文本内容
 				const lineText = editor.getLine(editor.getCursor().line);
+
 				// 在当前行的末尾添加新的文本
-				editor.replaceRange(` [🏗️ Task-Link](things:///show?id=${taskID}) #things-todo `, {line: editor.getCursor().line, ch: lineText.length});
+				editor.replaceRange(` [🏗️ Things-Task](things:///show?id=${taskID})`, { line: editor.getCursor().line, ch: lineText.length });
 			}
 		});
-	
-		
+
+
 		this.addCommand({
 			id: 'create-things-task',
 			name: 'Create Things Task',
@@ -127,5 +146,5 @@ export default class ThingsLink extends Plugin {
 
 	}
 
-	
+
 }
