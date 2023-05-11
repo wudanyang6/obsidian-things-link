@@ -13,4 +13,4 @@ Seamlessly create [Things](https://culturedcode.com/things/) tasks and projects 
 
 `Create Things Project` will create a new Things project from the current note and add deeplinks between the two for easy navitagion.
 
-`Create Things Task` will create a new Things task in the Inbox from the current line in the Obsidian note and add deeplinks between the two for easy navigation.
+`Create Things Task` will create a new Things task in the Inbox from the current line in the Obsidian note and add deeplinks between the two for easy navigation. If the note has the `#things-project` tag, the task will be created in the project with the note's title.
