@@ -61,30 +61,15 @@ export default class ThingsLink extends Plugin {
 			} else {
 				const editor = view.editor
 				const thingsDeepLink = `things:///show?id=${projectID}`;
-				let fileText = editor.getValue()
-				const lines = fileText.split('\n');
-				const h1Index = lines.findIndex(line => line.startsWith('#'));
-				if (h1Index !== -1) {
-					let startRange: EditorPosition = {
-						line: h1Index,
-						ch: lines[h1Index].length
-					}
-					let endRange: EditorPosition = {
-						line: h1Index,
-						ch: lines[h1Index].length
-					}
-					editor.replaceRange(`\n\n #things-project [🏗️ Things-Project](${thingsDeepLink})`, startRange, endRange);
-				} else {
-					let startRange: EditorPosition = {
-						line: 0,
-						ch: 0
-					}
-					let endRange: EditorPosition = {
-						line: 0,
-						ch: 0
-					}
-					editor.replaceRange(` #things-project [🏗️ Things-Project](${thingsDeepLink})\n\n`, startRange, endRange);
+				let startRange: EditorPosition = {
+					line: 0,
+					ch: 0
 				}
+				let endRange: EditorPosition = {
+					line: 0,
+					ch: 0
+				}
+				editor.replaceRange(`#things-project [🏗️ Things-Project](${thingsDeepLink})\n\n`, startRange, endRange);
 			}
 		});
 
