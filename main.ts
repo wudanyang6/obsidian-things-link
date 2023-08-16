@@ -20,12 +20,12 @@ function urlEncode(line: string) {
 
 
 function createProject(title: string, deepLink: string) {
-	const project = `things:///add-project?title=${title}&notes=${deepLink}&tags=obsidian&x-success=obsidian://project-id`
+	const project = `things:///add-project?title=${title}&notes=${deepLink}&tags=obsidian&x-success=obsidian://things-project-id`
 	window.open(project);
 }
 
-function createTask(line: string, deepLink: string) {
-	// 获取当前活动文件对象
+function getTagsFromFile() {
+   	// 获取当前活动文件对象
 	const file = this.app.workspace.getActiveFile();
 
 	// 获取当前文件的元数据
@@ -33,16 +33,19 @@ function createTask(line: string, deepLink: string) {
 	const title = file.name
 	const fileName = title.replace(/\.md$/, '')
 	const tags = getAllTags(fileCache)
-	console.log(tags)
+    return tags
+}
 
-	let taskUrl = `things:///add?title=${line}&notes=${deepLink}&tags=obsidian&x-success=obsidian://task-id`
+function createTask(line: string, deepLink: string) {
+
+	let taskUrl = `things:///add?title=${line}&notes=${deepLink}&tags=obsidian&x-success=obsidian://things-task-id`
 
 	// 判断当前文件的标签中是否包含 #things-project 标签
 	if (tags.includes('#things-project')) {
 		// task url 中添加 project 参数
+        // 对应的 todo 会添加到相应的 project 列表中
 		taskUrl += '&list=' + encodeURIComponent(fileName)
 	}
-	console.log(taskUrl)
 
 	window.open(taskUrl);
 }
@@ -51,8 +54,7 @@ function createTask(line: string, deepLink: string) {
 export default class ThingsLink extends Plugin {
 
 	async onload() {
-
-		this.registerObsidianProtocolHandler("project-id", async (id) => {
+		this.registerObsidianProtocolHandler("things-project-id", async (id) => {
 			const projectID = id['x-things-id'];
 			const workspace = this.app.workspace;
 			const view = workspace.getActiveViewOfType(MarkdownView);
@@ -69,13 +71,13 @@ export default class ThingsLink extends Plugin {
 					line: 0,
 					ch: 0
 				}
-				editor.replaceRange(`#things-project [🏗️ Things-Project](${thingsDeepLink})\n\n`, startRange, endRange);
+				editor.replaceRange(`- [ ] [️Things-Project](${thingsDeepLink}) #things-project \n\n`, startRange, endRange);
 			}
 		});
 
 		this.addCommand({
 			id: 'create-things-project',
-			name: 'Create Things Project',
+			name: 'Things: create things project',
 			editorCallback: (editor: Editor, view: MarkdownView) => {
 				const workspace = this.app.workspace;
 				const fileTitle = workspace.getActiveFile()
@@ -91,7 +93,7 @@ export default class ThingsLink extends Plugin {
 			}
 		});
 
-		this.registerObsidianProtocolHandler("task-id", async (id) => {
+		this.registerObsidianProtocolHandler("things-task-id", async (id) => {
 			const taskID = id['x-things-id'];
 			const view = this.app.workspace.getActiveViewOfType(MarkdownView);
 			if (view == null) {
@@ -102,14 +104,14 @@ export default class ThingsLink extends Plugin {
 				const lineText = editor.getLine(editor.getCursor().line);
 
 				// 在当前行的末尾添加新的文本
-				editor.replaceRange(` [🏗️ Things-Task](things:///show?id=${taskID})`, { line: editor.getCursor().line, ch: lineText.length });
+				editor.replaceRange(` [🏗️ Things-todo](things:///show?id=${taskID}) #things-todo`, { line: editor.getCursor().line, ch: lineText.length });
 			}
 		});
 
 
 		this.addCommand({
 			id: 'create-things-task',
-			name: 'Create Things Task',
+			name: 'Things: create things todo',
 			editorCallback: (editor: Editor, view: MarkdownView) => {
 				const workspace = this.app.workspace;
 				const fileTitle = workspace.getActiveFile()
@@ -120,13 +122,20 @@ export default class ThingsLink extends Plugin {
 					fileName = fileName.replace(/\.md$/, '')
 					const obsidianDeepLink = (this.app as any).getObsidianUrl(fileTitle)
 					const encodedLink = urlEncode(obsidianDeepLink)
-					const line = getCurrentLine(editor, view)
+
+					let line = getCurrentLine(editor, view)
+                    // 去除行文本中的 `- [ ] ` 字符串
+                    line = line.replace(/- \[ \] /g, '');
+
 					const task = prepareTask(line)
 					createTask(task, encodedLink)
 				}
 			}
 		});
+
 	}
+
+
 	onunload() {
 
 	}
